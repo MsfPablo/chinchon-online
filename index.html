@@ -197,7 +197,11 @@
 
   /* ---- table ---- */
   .table{
-    background:linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.22)), var(--felt);
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.022) 0 2px, transparent 2px 4px),
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.032) 0 2px, transparent 2px 4px),
+      radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,0.05), transparent 60%),
+      linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.24)), var(--felt);
     border:1px solid var(--felt-line);
     border-radius:20px;
     padding:22px 16px 26px;
@@ -284,10 +288,14 @@
 
   .card .pip{
     position:absolute;
-    width:17px; height:17px;
-    margin-left:-8.5px; margin-top:-8.5px;
+    width:18px; height:18px;
+    margin-left:-9px; margin-top:-9px;
   }
   .card .pip svg{ width:100%; height:100%; display:block; }
+  .card .pip-ace{
+    width:42px; height:42px;
+    margin-left:-21px; margin-top:-21px;
+  }
 
   .card .court{ display:block; width:44px; height:62px; margin-top:-4px; }
   .card .court svg{ width:100%; height:100%; display:block; }
@@ -432,29 +440,46 @@
   // Spanish-deck suit marks, drawn as inline SVG so they read as oro / copa /
   // espada / basto rather than as generic emoji.
   var SUIT_SVG = {
+    // Oro: a struck coin — milled rim, inner bead ring, rosette centre.
     oros: '<svg viewBox="0 0 40 40" aria-hidden="true">' +
-      '<circle cx="20" cy="20" r="15" fill="none" stroke="currentColor" stroke-width="2.5"/>' +
-      '<circle cx="20" cy="20" r="9.5" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
-      '<circle cx="20" cy="20" r="3.4" fill="currentColor"/>' +
+      '<circle cx="20" cy="20" r="16" fill="currentColor" opacity="0.13"/>' +
+      '<circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="2"/>' +
+      '<circle cx="20" cy="20" r="12.4" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.85"/>' +
+      '<circle cx="20" cy="20" r="8.6" fill="none" stroke="currentColor" stroke-width="1.7"/>' +
+      '<path d="M20 12.6 L21.9 17.4 L26.8 17.6 L23 20.7 L24.4 25.4 L20 22.6 L15.6 25.4 L17 20.7 L13.2 17.6 L18.1 17.4 Z" fill="currentColor"/>' +
       '</svg>',
+    // Copa: footed chalice with handles, knop and spreading base.
     copas: '<svg viewBox="0 0 40 40" aria-hidden="true">' +
-      '<path d="M11 7 h18 v7 a9 9 0 0 1 -18 0 z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>' +
-      '<path d="M20 23 v7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
-      '<path d="M13 33 h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
-      '<path d="M8 12 a5 5 0 0 0 3 6" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
-      '<path d="M32 12 a5 5 0 0 1 -3 6" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+      '<path d="M11 8 h18 v6.5 a9 9 0 0 1 -18 0 z" fill="currentColor" opacity="0.15"/>' +
+      '<path d="M11 8 h18 v6.5 a9 9 0 0 1 -18 0 z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>' +
+      '<path d="M11 11.6 h18" stroke="currentColor" stroke-width="1.3" opacity="0.8"/>' +
+      '<path d="M11 13 q-5 1 -4.5 5.5 Q7 22 11 21.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
+      '<path d="M29 13 q5 1 4.5 5.5 Q33 22 29 21.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
+      '<path d="M20 23.4 v3.2" stroke="currentColor" stroke-width="2.4"/>' +
+      '<ellipse cx="20" cy="27.6" rx="3.1" ry="1.9" fill="currentColor" opacity="0.9"/>' +
+      '<path d="M20 29.4 v2.6" stroke="currentColor" stroke-width="2.4"/>' +
+      '<path d="M13.4 34.4 q6.6 -3 13.2 0 z" fill="currentColor" opacity="0.85"/>' +
+      '<path d="M13.4 34.4 q6.6 -3 13.2 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>' +
       '</svg>',
+    // Espada: straight blade, crossguard, ricasso and pommel.
     espadas: '<svg viewBox="0 0 40 40" aria-hidden="true">' +
-      '<path d="M20 4 l4 6 v14 h-8 v-14 z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>' +
-      '<path d="M11 25 h18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
-      '<path d="M20 25 v9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
-      '<circle cx="20" cy="35.5" r="2.2" fill="currentColor"/>' +
+      '<path d="M20 3 L23.4 9.6 V24 h-6.8 V9.6 Z" fill="currentColor" opacity="0.15"/>' +
+      '<path d="M20 3 L23.4 9.6 V24 h-6.8 V9.6 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' +
+      '<path d="M20 6 V24" stroke="currentColor" stroke-width="1.1" opacity="0.75"/>' +
+      '<path d="M10.5 25.6 q9.5 -3 19 0 q-9.5 3 -19 0 z" fill="currentColor"/>' +
+      '<path d="M20 27.4 v6.2" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
+      '<circle cx="20" cy="35.6" r="2.7" fill="currentColor" opacity="0.25"/>' +
+      '<circle cx="20" cy="35.6" r="2.7" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
       '</svg>',
+    // Basto: knotted cudgel, lopped branches, tapering to the grip.
     bastos: '<svg viewBox="0 0 40 40" aria-hidden="true">' +
-      '<path d="M11 35 L29 7" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>' +
-      '<path d="M21 20 l7 2.5" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>' +
-      '<path d="M16 28 l-6.5 2" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>' +
-      '<path d="M24 14 l5 -3" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>' +
+      '<path d="M12.5 35.5 L27.5 6.5" stroke="currentColor" stroke-width="5.6" stroke-linecap="round"/>' +
+      '<path d="M12.5 35.5 L27.5 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity="0.25"/>' +
+      '<path d="M24.6 12.4 l6.4 -3.4" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/>' +
+      '<path d="M21 19.6 l7 2.6" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/>' +
+      '<path d="M17.2 27.4 l-7.4 2.2" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"/>' +
+      '<circle cx="23.2" cy="16.2" r="1.5" fill="currentColor" opacity="0.55"/>' +
+      '<circle cx="18.6" cy="24" r="1.3" fill="currentColor" opacity="0.55"/>' +
       '</svg>'
   };
   var RANKS = [1,2,3,4,5,6,7,10,11,12];
@@ -471,54 +496,60 @@
   // the way a Spanish deck arranges them.
   var PIP_LAYOUT = {
     1: [[50,50]],
-    2: [[50,27],[50,73]],
+    2: [[50,28],[50,72]],
     3: [[50,26],[50,50],[50,74]],
-    4: [[30,27],[70,27],[30,73],[70,73]],
-    5: [[30,25],[70,25],[50,50],[30,75],[70,75]],
-    6: [[30,22],[70,22],[30,50],[70,50],[30,78],[70,78]],
-    7: [[30,20],[70,20],[30,45],[70,45],[50,63],[30,82],[70,82]]
+    // Columns sit inboard of the corner indices so pips never collide with them.
+    4: [[33,31],[67,31],[33,69],[67,69]],
+    5: [[33,29],[67,29],[50,50],[33,71],[67,71]],
+    6: [[33,29],[67,29],[33,50],[67,50],[33,71],[67,71]],
+    7: [[33,28],[67,28],[33,46],[67,46],[50,60],[33,74],[67,74]]
   };
 
   // Court figures: Sota (page), Caballo (knight on horseback), Rey (crowned
   // king) — stylised line art in the woodcut spirit of the real deck.
   var FIGURE_SVG = {
-    // Sota: standing page, feathered cap
-    10: '<svg viewBox="0 0 60 90" aria-hidden="true">' +
-      '<path d="M18 22 q12 -8 24 0 l-2 4 h-20 z" fill="currentColor" opacity="0.16"/>' +
-      '<path d="M18 22 q12 -8 24 0 l-2 4 h-20 z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' +
-      '<path d="M40 20 q8 -8 10 -16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
-      '<path d="M24 26 v7 a6 6 0 0 0 12 0 v-7" fill="none" stroke="currentColor" stroke-width="2"/>' +
-      '<circle cx="27" cy="31" r="1.1" fill="currentColor"/>' +
-      '<circle cx="33" cy="31" r="1.1" fill="currentColor"/>' +
-      '<path d="M16 76 q3 -22 14 -26 q11 4 14 26 z" fill="currentColor" opacity="0.12"/>' +
-      '<path d="M16 76 q3 -22 14 -26 q11 4 14 26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>' +
-      '<path d="M30 50 v26" stroke="currentColor" stroke-width="1.4" opacity="0.75"/>' +
-      '<path d="M22 58 l8 5 l8 -5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+    // Sota: standing page, plumed cap, tunic and belt.
+    10: '<svg viewBox="0 0 60 92" aria-hidden="true">' +
+      '<path d="M43 20 q7 -9 8 -17 l3 1 q-1 10 -9 19z" fill="currentColor" opacity="0.5"/>' +
+      '<path d="M17 22 q13 -9 26 0 l-1.5 4.5 h-23z" fill="currentColor" opacity="0.35"/>' +
+      '<path d="M17 22 q13 -9 26 0 l-1.5 4.5 h-23z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>' +
+      '<path d="M24 27 v7.5 a6 6 0 0 0 12 0 V27z" fill="currentColor" opacity="0.12"/>' +
+      '<path d="M24 27 v7.5 a6 6 0 0 0 12 0 V27" fill="none" stroke="currentColor" stroke-width="1.9"/>' +
+      '<circle cx="27.2" cy="31.6" r="1.15" fill="currentColor"/>' +
+      '<circle cx="32.8" cy="31.6" r="1.15" fill="currentColor"/>' +
+      '<path d="M27.6 37 q2.4 1.8 4.8 0" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+      '<path d="M15 78 q3.5 -24 15 -28 q11.5 4 15 28z" fill="currentColor" opacity="0.28"/>' +
+      '<path d="M15 78 q3.5 -24 15 -28 q11.5 4 15 28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/>' +
+      '<path d="M18.6 62 h22.8" stroke="currentColor" stroke-width="2.4" opacity="0.85"/>' +
+      '<path d="M30 50 v28" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>' +
       '</svg>',
-    // Caballo: horse head in profile, bridled
-    11: '<svg viewBox="0 0 60 90" aria-hidden="true">' +
-      '<path d="M18 78 v-12 q0 -16 10 -24 q-5 0 -9 3 l-2 -7 q7 -7 16 -8 l2 -8 l6 6 q10 5 11 18 q1 16 -7 24 l0 8 z" fill="currentColor" opacity="0.14"/>' +
-      '<path d="M18 78 v-12 q0 -16 10 -24 q-5 0 -9 3 l-2 -7 q7 -7 16 -8 l2 -8 l6 6 q10 5 11 18 q1 16 -7 24 l0 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>' +
-      '<path d="M41 21 l3 -8 l4 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>' +
-      '<circle cx="38" cy="32" r="1.6" fill="currentColor"/>' +
-      '<path d="M28 40 q9 3 16 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
-      '<path d="M16 78 h30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
+    // Caballo: horse in profile, bridle, mane and hoof line.
+    11: '<svg viewBox="0 0 60 92" aria-hidden="true">' +
+      '<path d="M17 79 V64 q0 -17 11 -25 q-6 0 -10 3.4 L15.6 34 q7.6 -7.6 17.4 -8.6 L35 16 l6.4 6.4 q10.6 5.4 11.6 19 q1 17 -7.6 25.6 V79z" fill="currentColor" opacity="0.26"/>' +
+      '<path d="M17 79 V64 q0 -17 11 -25 q-6 0 -10 3.4 L15.6 34 q7.6 -7.6 17.4 -8.6 L35 16 l6.4 6.4 q10.6 5.4 11.6 19 q1 17 -7.6 25.6 V79" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<path d="M41.6 22.4 L45 13.4 l4.6 7.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>' +
+      '<path d="M33 26 q7 -4 12 -1" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>' +
+      '<circle cx="39.4" cy="33.4" r="1.8" fill="currentColor"/>' +
+      '<path d="M28.6 44 q10 3.4 17.4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<path d="M15 79 h32" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
       '</svg>',
-    // Rey: crowned, bearded, robed
-    12: '<svg viewBox="0 0 60 90" aria-hidden="true">' +
-      '<path d="M17 26 L19 11 L25 19 L30 8 L35 19 L41 11 L43 26 Z" fill="currentColor" opacity="0.18"/>' +
-      '<path d="M17 26 L19 11 L25 19 L30 8 L35 19 L41 11 L43 26 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' +
-      '<circle cx="19" cy="10" r="1.7" fill="currentColor"/>' +
-      '<circle cx="30" cy="7" r="1.7" fill="currentColor"/>' +
-      '<circle cx="41" cy="10" r="1.7" fill="currentColor"/>' +
-      '<path d="M17 26 h26" stroke="currentColor" stroke-width="2.2"/>' +
-      '<path d="M24 29 v6 a6 6 0 0 0 12 0 v-6" fill="none" stroke="currentColor" stroke-width="2"/>' +
-      '<circle cx="27" cy="33" r="1.1" fill="currentColor"/>' +
-      '<circle cx="33" cy="33" r="1.1" fill="currentColor"/>' +
-      '<path d="M25 40 q5 7 10 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' +
-      '<path d="M15 76 q3 -22 15 -26 q12 4 15 26 z" fill="currentColor" opacity="0.12"/>' +
-      '<path d="M15 76 q3 -22 15 -26 q12 4 15 26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>' +
-      '<path d="M30 50 v26" stroke="currentColor" stroke-width="1.4" opacity="0.75"/>' +
+    // Rey: crowned, bearded, in a robe with a sceptre.
+    12: '<svg viewBox="0 0 60 92" aria-hidden="true">' +
+      '<path d="M16 26 L18.4 10 L25 18.6 L30 7 L35 18.6 L41.6 10 L44 26 Z" fill="currentColor" opacity="0.4"/>' +
+      '<path d="M16 26 L18.4 10 L25 18.6 L30 7 L35 18.6 L41.6 10 L44 26 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' +
+      '<circle cx="18.4" cy="9" r="1.9" fill="currentColor"/>' +
+      '<circle cx="30" cy="6" r="1.9" fill="currentColor"/>' +
+      '<circle cx="41.6" cy="9" r="1.9" fill="currentColor"/>' +
+      '<path d="M16 26 h28" stroke="currentColor" stroke-width="2.4"/>' +
+      '<path d="M24 29.4 v6.6 a6 6 0 0 0 12 0 V29.4z" fill="currentColor" opacity="0.12"/>' +
+      '<path d="M24 29.4 v6.6 a6 6 0 0 0 12 0 V29.4" fill="none" stroke="currentColor" stroke-width="1.9"/>' +
+      '<circle cx="27.2" cy="33.4" r="1.15" fill="currentColor"/>' +
+      '<circle cx="32.8" cy="33.4" r="1.15" fill="currentColor"/>' +
+      '<path d="M25.4 40 q4.6 7.6 9.2 0 q-1.6 5.4 -4.6 5.6 q-3 -0.2 -4.6 -5.6z" fill="currentColor" opacity="0.5"/>' +
+      '<path d="M14 78 q3.6 -24 16 -28 q12.4 4 16 28z" fill="currentColor" opacity="0.28"/>' +
+      '<path d="M14 78 q3.6 -24 16 -28 q12.4 4 16 28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/>' +
+      '<path d="M30 50 v28" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>' +
+      '<path d="M22 58 l8 5 l8 -5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>' +
       '</svg>'
   };
 
@@ -709,8 +740,10 @@
                '<span class="court-suit">'+SUIT_SVG[c.suit]+'</span>' +
                '<span class="figure">'+FIGURE_NAME[c.rank]+'</span>';
     } else {
+      // The ace carries one large device, the way a real Spanish deck prints it.
+      var pipCls = c.rank === 1 ? 'pip pip-ace' : 'pip';
       PIP_LAYOUT[c.rank].forEach(function(p){
-        inner += '<span class="pip" style="left:'+p[0]+'%;top:'+p[1]+'%">'+SUIT_SVG[c.suit]+'</span>';
+        inner += '<span class="'+pipCls+'" style="left:'+p[0]+'%;top:'+p[1]+'%">'+SUIT_SVG[c.suit]+'</span>';
       });
     }
     div.innerHTML = inner;
