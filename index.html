@@ -409,6 +409,105 @@
   .modal .rounds-table{ text-align:left; margin:16px 0; font-size:13.5px; }
   .modal .rounds-table div{ display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--felt-line);}
 
+  /* ---- Round / match summary ---- */
+  .summary{
+    background:linear-gradient(180deg, rgba(26,90,69,0.55), var(--panel));
+    border:1px solid var(--panel-border);
+    border-radius:18px;
+    padding:26px 22px 24px;
+    text-align:center;
+    box-shadow:0 18px 44px var(--shadow);
+    animation:rise .34s cubic-bezier(.2,.8,.3,1) both;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:none} }
+
+  .summary-title{
+    font-size:clamp(22px,3.4vw,30px); color:var(--gold); margin:0 0 4px;
+  }
+  .summary-note{ font-size:13px; color:var(--cream); opacity:0.75; margin:0 0 16px; }
+
+  .summary-scores{
+    max-width:440px; margin:14px auto 20px; text-align:left;
+    border:1px solid var(--panel-border); border-radius:12px; overflow:hidden;
+  }
+  .summary-row{
+    display:grid; grid-template-columns:1fr auto auto; gap:14px;
+    align-items:center; padding:11px 16px;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+  }
+  .summary-row:last-child{ border-bottom:none; }
+  .summary-row.head{
+    font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase;
+    color:var(--cream); opacity:0.55; background:rgba(0,0,0,0.22);
+  }
+  .summary-row.me{ background:rgba(211,163,78,0.09); }
+  .sr-name{ font-family:'Fraunces',serif; font-size:15px; color:var(--cream); }
+  .sr-gain{ font-variant-numeric:tabular-nums; font-size:15px; min-width:64px; text-align:right; color:var(--cream); }
+  .sr-gain.bad{ color:#e79b8b; }
+  .sr-gain.good{ color:#7fc490; }
+  .sr-total{
+    font-family:'Fraunces',serif; font-size:20px; color:var(--gold);
+    font-variant-numeric:tabular-nums; min-width:52px; text-align:right;
+  }
+  .sr-total.big{ font-size:28px; }
+  .sr-pos{
+    font-family:'Fraunces',serif; font-size:13px; color:var(--gold);
+    opacity:0.7; width:26px;
+  }
+  .summary-row.final-row{ grid-template-columns:auto 1fr auto; }
+  .summary-row.winner{
+    background:rgba(211,163,78,0.16);
+    box-shadow:inset 3px 0 0 var(--gold);
+  }
+
+  .reveal{ display:flex; flex-direction:column; gap:14px; margin-bottom:20px; }
+  .reveal-row{
+    background:rgba(0,0,0,0.2); border-radius:12px; padding:12px 14px;
+  }
+  .reveal-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:9px; gap:10px; flex-wrap:wrap;
+  }
+  .reveal-name{ font-family:'Fraunces',serif; font-size:14px; color:var(--cream); }
+  .reveal-sum{ font-size:11.5px; letter-spacing:0.6px; color:var(--gold); opacity:0.9; }
+  .reveal-cards{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .card.small{ width:50px; height:73px; }
+  .card.small .corner{ font-size:10px; top:6px; left:6px; }
+  .card.small .corner.br{ bottom:6px; right:6px; top:auto; left:auto; }
+  .card.small .pip{ width:13px; height:13px; margin-left:-6.5px; margin-top:-6.5px; }
+  .card.small .pip-ace{ width:30px; height:30px; margin-left:-15px; margin-top:-15px; }
+  .card.small .court{ width:33px; height:46px; }
+  .card.small .figure{ font-size:6px; bottom:7px; }
+  .card.small .court-suit{ width:11px; height:11px; top:6px; right:6px; }
+
+  .final-crown{ font-size:52px; line-height:1; margin-bottom:6px; animation:pop .5s cubic-bezier(.2,1.3,.4,1) both; }
+  @keyframes pop{ from{opacity:0; transform:scale(.4)} to{opacity:1; transform:scale(1)} }
+  .final-title{ font-size:clamp(26px,4.4vw,38px); color:var(--gold); margin:0 0 6px; }
+  .final-why{ font-size:13.5px; color:var(--cream); opacity:0.8; max-width:46ch; margin:0 auto 4px; line-height:1.6; }
+  .summary.win{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 18px 50px var(--shadow); }
+
+  /* ---- Motion ---- */
+  .deal-in{ animation:dealIn .34s cubic-bezier(.2,.8,.3,1) both; }
+  @keyframes dealIn{
+    from{ opacity:0; transform:translateY(-14px) rotate(-4deg) scale(.9); }
+    to{ opacity:1; transform:none; }
+  }
+  .discard-land{ animation:landOn .3s cubic-bezier(.2,.9,.3,1) both; }
+  @keyframes landOn{
+    from{ opacity:0; transform:translateY(-26px) scale(1.06) rotate(3deg); }
+    to{ opacity:1; transform:none; }
+  }
+  .score-card .pts{ transition:color .25s ease; }
+  .score-card.bump .pts{ animation:bump .5s ease both; }
+  @keyframes bump{ 0%{transform:scale(1)} 35%{transform:scale(1.32); color:#fff} 100%{transform:scale(1)} }
+  .turn-flash{ animation:flash .5s ease both; }
+  @keyframes flash{ 0%{opacity:.35} 100%{opacity:1} }
+
+  @media (prefers-reduced-motion: reduce){
+    .summary, .deal-in, .discard-land, .final-crown,
+    .score-card.bump .pts, .turn-flash{ animation:none !important; }
+  }
+
   footer{ margin-top:22px; font-size:11px; color:var(--cream); opacity:0.35; text-align:center; }
 
   @media (prefers-reduced-motion: reduce){
@@ -702,8 +801,10 @@
       round: 1,
       names: ['Jugador 1','Jugador 2'],
       log: ['Comienza la partida. Reparto de 7 cartas para cada jugador.'],
+      roundSummary: null,
       matchOver: false,
-      winner: null
+      winner: null,
+      endReason: null
     };
   }
 
@@ -717,6 +818,10 @@
   var root = document.getElementById('root');
   var logEl = document.getElementById('log');
   var selectedCardId = null;
+  var lastDiscardId = null;
+  var lastScores = [null, null];
+  var lastRound = null;
+  var justDealt = false;
 
   function cardEl(c, extraClass, onClick){
     var div = document.createElement('div');
@@ -774,6 +879,10 @@
     var mine = mySeat;
     var opp = mySeat === 0 ? 1 : 0;
 
+    // A new round means a fresh deal: stagger the cards in.
+    justDealt = (lastRound !== state.round);
+    lastRound = state.round;
+
     // scoreboard
     var sb = document.createElement('div');
     sb.className = 'scoreboard';
@@ -785,12 +894,20 @@
         '<div><div class="name">'+state.names[i]+(isMe?' (tú)':'')+'</div>' +
         '<div class="tag">'+(state.turn===i && !state.matchOver ? 'En turno' : '')+'</div></div>' +
         '<div style="text-align:right"><div class="pts">'+state.scores[i]+'</div><div class="round">ronda '+state.round+'</div></div>';
+      if (lastScores[i] !== null && lastScores[i] !== state.scores[i]){
+        card.classList.add('bump');
+      }
+      lastScores[i] = state.scores[i];
       sb.appendChild(card);
     });
     root.appendChild(sb);
 
     if (state.matchOver){
       renderMatchOver();
+      return;
+    }
+    if (state.phase === 'roundOver'){
+      renderRoundOver();
       return;
     }
 
@@ -846,6 +963,8 @@
     if (state.discard.length){
       var topDisc = state.discard[state.discard.length-1];
       var dEl = cardEl(topDisc, canDraw ? 'mine' : '');
+      if (lastDiscardId !== topDisc.id){ dEl.classList.add('discard-land'); }
+      lastDiscardId = topDisc.id;
       if (canDraw){
         dEl.addEventListener('click', function(){ doDraw('discard'); });
       }
@@ -895,20 +1014,28 @@
     var meldedSet = {};
     partition.melds.forEach(function(m){ m.forEach(function(id){ meldedSet[id]=true; }); });
 
-    myHand.forEach(function(c){
+    myHand.forEach(function(c, ci){
       var cls = 'mine' + (meldedSet[c.id] ? ' melded' : '') + (selectedCardId === c.id ? ' selected' : '');
       var el = cardEl(c, cls, function(){
         if (!canDiscard) return;
         selectedCardId = (selectedCardId === c.id) ? null : c.id;
         render();
       });
+      if (justDealt){
+        el.classList.add('deal-in');
+        el.style.animationDelay = (ci * 60) + 'ms';
+      }
       myHandEl.appendChild(el);
     });
     myWrap.appendChild(myHandEl);
 
     var hint = document.createElement('div');
     hint.className = 'hint';
-    hint.textContent = 'Puntos si cerraras ahora: ' + partition.deadwood + ' (cartas con contorno verde = combinadas).';
+    hint.innerHTML = 'Cartas sueltas: <b>' + partition.deadwood + ' puntos</b> · ' +
+      (partition.deadwood <= 5
+        ? '<span style="color:var(--ok)">ya puedes cerrar</span>'
+        : 'puedes cerrar con 5 o menos') +
+      ' · las de contorno verde están combinadas.';
     myWrap.appendChild(hint);
 
     var actions = document.createElement('div');
@@ -923,12 +1050,13 @@
 
     var closeBtn = document.createElement('button');
     closeBtn.className = 'btn btn-outline';
-    var canClose = canDiscard && myHand.length === 8 && (function(){
-      var p8 = bestPartition(myHand);
-      return p8.deadCards.length <= 1;
-    })();
-    closeBtn.textContent = 'Cerrar ronda';
+    // You may close when the cards left over add up to 5 or less.
+    var canClose = canDiscard && myHand.length === 8 && bestPartition(myHand).deadwood <= 5;
+    closeBtn.textContent = canClose ? 'Cerrar ronda ✓' : 'Cerrar ronda';
     closeBtn.disabled = !canClose;
+    closeBtn.title = canClose
+      ? 'Cierra la ronda: tus cartas sueltas suman 5 o menos.'
+      : 'Para cerrar, tus cartas sin combinar deben sumar 5 o menos.';
     closeBtn.addEventListener('click', function(){ doClose(); });
     actions.appendChild(closeBtn);
 
@@ -1021,28 +1149,120 @@
     setTimeout(function(){ try { input.focus(); } catch(e){} }, 50);
   }
 
+  function handRow(seat, sum){
+    var wrap = document.createElement('div');
+    wrap.className = 'reveal-row';
+
+    var head = document.createElement('div');
+    head.className = 'reveal-head';
+    head.innerHTML =
+      '<span class="reveal-name">' + state.names[seat] + (seat === mySeat ? ' (tú)' : '') + '</span>' +
+      '<span class="reveal-sum">' + sum + ' pts sin combinar</span>';
+    wrap.appendChild(head);
+
+    var cards = document.createElement('div');
+    cards.className = 'reveal-cards';
+    var melded = {};
+    (state.roundSummary.melds[seat] || []).forEach(function(m){
+      m.forEach(function(id){ melded[id] = true; });
+    });
+    state.roundSummary.hands[seat].forEach(function(c, i){
+      var el = cardEl(c, melded[c.id] ? 'melded small' : 'small');
+      el.style.animationDelay = (i * 55) + 'ms';
+      el.classList.add('deal-in');
+      cards.appendChild(el);
+    });
+    wrap.appendChild(cards);
+    return wrap;
+  }
+
+  function renderRoundOver(){
+    var rs = state.roundSummary;
+    if (!rs) return;
+
+    var panel = document.createElement('div');
+    panel.className = 'summary';
+
+    var title = rs.chinchon ? '¡CHINCHÓN!'
+      : (rs.closer === mySeat ? 'Has cerrado la ronda' : state.names[rs.closer] + ' ha cerrado');
+    panel.innerHTML =
+      '<h2 class="summary-title">' + title + '</h2>' +
+      (rs.dry ? '<p class="summary-note">Cierre en seco: 10 puntos menos.</p>' : '');
+
+    var table = document.createElement('div');
+    table.className = 'summary-scores';
+    [0,1].forEach(function(i){
+      var g = rs.gained[i];
+      var row = document.createElement('div');
+      row.className = 'summary-row' + (i === mySeat ? ' me' : '');
+      row.innerHTML =
+        '<span class="sr-name">' + state.names[i] + (i === mySeat ? ' (tú)' : '') + '</span>' +
+        '<span class="sr-gain ' + (g > 0 ? 'bad' : (g < 0 ? 'good' : '')) + '">' +
+          (g > 0 ? '+' + g : (g < 0 ? g : '0')) + '</span>' +
+        '<span class="sr-total">' + state.scores[i] + '</span>';
+      table.appendChild(row);
+    });
+    var hdr = document.createElement('div');
+    hdr.className = 'summary-row head';
+    hdr.innerHTML = '<span class="sr-name">Jugador</span><span class="sr-gain">Esta ronda</span><span class="sr-total">Total</span>';
+    table.insertBefore(hdr, table.firstChild);
+    panel.appendChild(table);
+
+    var reveal = document.createElement('div');
+    reveal.className = 'reveal';
+    reveal.appendChild(handRow(0, rs.deadwood[0]));
+    reveal.appendChild(handRow(1, rs.deadwood[1]));
+    panel.appendChild(reveal);
+
+    var go = document.createElement('button');
+    go.className = 'btn btn-primary';
+    go.textContent = 'Siguiente ronda';
+    go.addEventListener('click', function(){ act({ type:'nextRound' }); });
+    panel.appendChild(go);
+
+    root.appendChild(panel);
+  }
+
   function renderMatchOver(){
-    var back = document.createElement('div');
-    back.className = 'modal-back';
-    var modal = document.createElement('div');
-    modal.className = 'modal';
-    var winnerName = state.names[state.winner];
-    modal.innerHTML =
-      '<h2>¡Partida terminada!</h2>' +
-      '<p><b style="color:var(--gold)">'+winnerName+'</b> gana la partida.</p>' +
-      '<div class="rounds-table">' +
-        '<div><span>'+state.names[0]+'</span><span>'+state.scores[0]+' pts</span></div>' +
-        '<div><span>'+state.names[1]+'</span><span>'+state.scores[1]+' pts</span></div>' +
-      '</div>';
+    var iWon = state.winner === mySeat;
+    var panel = document.createElement('div');
+    panel.className = 'summary final' + (iWon ? ' win' : ' lose');
+
+    panel.innerHTML =
+      '<div class="final-crown">' + (iWon ? '🏆' : '🃏') + '</div>' +
+      '<h2 class="final-title">' + (iWon ? '¡Has ganado!' : 'Ha ganado ' + state.names[state.winner]) + '</h2>' +
+      '<p class="final-why">' +
+        (state.endReason === 'chinchon'
+          ? state.names[state.winner] + ' cerró con un chinchón: escalera de siete cartas del mismo palo.'
+          : 'Se alcanzaron los 100 puntos. Gana quien menos puntos tiene.') +
+      '</p>';
+
+    var table = document.createElement('div');
+    table.className = 'summary-scores';
+    var order = state.scores[0] <= state.scores[1] ? [0,1] : [1,0];
+    order.forEach(function(i, pos){
+      var row = document.createElement('div');
+      row.className = 'summary-row final-row' + (i === state.winner ? ' winner' : '') + (i === mySeat ? ' me' : '');
+      row.innerHTML =
+        '<span class="sr-pos">' + (pos + 1) + 'º</span>' +
+        '<span class="sr-name">' + state.names[i] + (i === mySeat ? ' (tú)' : '') + '</span>' +
+        '<span class="sr-total big">' + state.scores[i] + '</span>';
+      table.appendChild(row);
+    });
+    panel.appendChild(table);
+
+    var rounds = document.createElement('p');
+    rounds.className = 'summary-note';
+    rounds.textContent = 'Partida de ' + state.round + (state.round === 1 ? ' ronda.' : ' rondas.');
+    panel.appendChild(rounds);
+
     var again = document.createElement('button');
     again.className = 'btn btn-primary';
     again.textContent = 'Jugar otra partida';
-    again.addEventListener('click', function(){
-      act({ type:'rematch' });
-    });
-    modal.appendChild(again);
-    back.appendChild(modal);
-    root.appendChild(back);
+    again.addEventListener('click', function(){ act({ type:'rematch' }); });
+    panel.appendChild(again);
+
+    root.appendChild(panel);
   }
 
   // ---------- Actions ----------
@@ -1059,6 +1279,7 @@
     if (a.type === 'draw') mutDraw(next, seat, a.source);
     else if (a.type === 'discard') mutDiscard(next, seat, a.cardId);
     else if (a.type === 'close') mutClose(next, seat);
+    else if (a.type === 'nextRound') mutNextRound(next);
     else if (a.type === 'rematch') next = mutRematch(next);
     state = next;
     sendState();
@@ -1105,40 +1326,73 @@
     if (s.turn !== seat || s.phase !== 'discard') return;
     var hand = s.hands[seat];
     if (hand.length !== 8) return;
+
     var p = bestPartition(hand);
-    if (p.deadCards.length > 1) return;
+    // Real rule: you may close when the cards left over add up to 5 or less.
+    if (p.deadwood > 5) return;
+
+    var dry = p.deadCards.length === 0;          // "cierre en seco"
     var seven = p.deadCards.length === 1
       ? hand.filter(function(c){ return c.id !== p.deadCards[0].id; })
       : hand.slice(0,7);
-    var wasChinchon = isChinchon(seven);
+    var wasChinchon = p.deadCards.length <= 1 && isChinchon(seven);
 
     var opp = seat === 0 ? 1 : 0;
-    var oppPartition = bestPartition(s.hands[opp]);
+    var oppP = bestPartition(s.hands[opp]);
 
-    pushLog(s, s.names[seat] + ' cierra la ronda' + (wasChinchon ? ' — ¡CHINCHÓN!' : '') + '.');
+    var gained = [0,0];
+    gained[opp] = oppP.deadwood;
+    gained[seat] = dry ? -10 : p.deadwood;       // closing dry takes 10 off
+
+    s.scores[seat] += gained[seat];
+    s.scores[opp] += gained[opp];
+
+    s.phase = 'roundOver';
+    s.roundSummary = {
+      closer: seat,
+      chinchon: wasChinchon,
+      dry: dry,
+      gained: gained,
+      hands: [s.hands[0].slice(), s.hands[1].slice()],
+      melds: [bestPartition(s.hands[0]).melds, bestPartition(s.hands[1]).melds],
+      deadwood: [bestPartition(s.hands[0]).deadwood, bestPartition(s.hands[1]).deadwood]
+    };
+
+    pushLog(s, s.names[seat] + ' cierra' + (dry ? ' en seco' : '') +
+      (wasChinchon ? ' — ¡CHINCHÓN!' : '') + '.');
+    pushLog(s, s.names[opp] + ' suma ' + gained[opp] + ' · ' +
+      s.names[seat] + ' ' + (gained[seat] < 0 ? 'resta ' + Math.abs(gained[seat]) : 'suma ' + gained[seat]) + '.');
+
+    // Chinchón wins the whole match outright.
     if (wasChinchon){
-      s.scores[opp] += oppPartition.deadwood + 25;
-      pushLog(s, s.names[opp] + ' suma ' + (oppPartition.deadwood + 25) + ' puntos (25 de penalización por chinchón).');
-    } else {
-      s.scores[opp] += oppPartition.deadwood;
-      pushLog(s, s.names[opp] + ' suma ' + oppPartition.deadwood + ' puntos por sus cartas sin combinar.');
+      s.matchOver = true;
+      s.winner = seat;
+      s.endReason = 'chinchon';
+      pushLog(s, '¡' + s.names[seat] + ' gana la partida con CHINCHÓN!');
+      return;
     }
 
     if (s.scores[0] >= 100 || s.scores[1] >= 100){
       s.matchOver = true;
-      s.winner = s.scores[0] < s.scores[1] ? 0 : (s.scores[1] < s.scores[0] ? 1 : seat);
+      // Whoever has FEWER points wins.
+      s.winner = s.scores[0] === s.scores[1] ? seat : (s.scores[0] < s.scores[1] ? 0 : 1);
+      s.endReason = 'limit';
       pushLog(s, '¡Partida terminada! Gana ' + s.names[s.winner] + '.');
-    } else {
-      var deck = shuffle(buildDeck());
-      s.hands = [deck.splice(0,7), deck.splice(0,7)];
-      s.discard = deck.splice(0,1);
-      s.deck = deck;
-      s.round = s.round + 1;
-      s.turn = s.round % 2 === 0 ? 1 : 0;
-      s.phase = 'draw';
-      s.drawnFrom = null;
-      pushLog(s, 'Comienza la ronda ' + s.round + '.');
     }
+  }
+
+  function mutNextRound(s){
+    if (s.phase !== 'roundOver' || s.matchOver) return;
+    var deck = shuffle(buildDeck());
+    s.hands = [deck.splice(0,7), deck.splice(0,7)];
+    s.discard = deck.splice(0,1);
+    s.deck = deck;
+    s.round = s.round + 1;
+    s.turn = s.round % 2 === 0 ? 1 : 0;
+    s.phase = 'draw';
+    s.drawnFrom = null;
+    s.roundSummary = null;
+    pushLog(s, 'Comienza la ronda ' + s.round + '.');
   }
 
   function mutRematch(prev){
