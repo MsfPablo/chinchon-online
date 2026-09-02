@@ -310,6 +310,30 @@
   .btn-outline:hover:not(:disabled){ background:rgba(211,163,78,0.12); }
   .btn-danger{ background:transparent; color:#e08d7f; border-color:#8a3a2f;}
 
+  .hand-tools{
+    display:flex; gap:8px; align-items:center; justify-content:center;
+    flex-wrap:wrap; margin-top:2px;
+  }
+  .tool-btn{
+    font-family:'Karla',sans-serif; font-size:12px;
+    padding:7px 13px; border-radius:8px; cursor:pointer;
+    background:rgba(0,0,0,0.22); color:var(--cream);
+    border:1px solid var(--panel-border);
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .tool-btn:hover{ border-color:var(--gold-dim); color:var(--gold); }
+  .tool-note{ font-size:11.5px; color:var(--cream); opacity:0.5; }
+
+  .my-hand .card{ touch-action:none; }
+  .card.dragging{
+    z-index:30;
+    cursor:grabbing;
+    box-shadow:0 3px 4px rgba(0,0,0,0.25), 0 18px 30px rgba(0,0,0,0.5);
+    transition:none;
+  }
+  .card.shift-left{ transform:translateX(-14px); }
+  .card.shift-right{ transform:translateX(14px); }
+
   .hint{ font-size:12px; color:var(--cream); opacity:0.55; text-align:center; max-width:60ch;}
 
   .log{
@@ -405,6 +429,35 @@
   .summary.win{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 18px 50px var(--shadow); }
 
   /* ---- Motion ---- */
+  /* The card you just picked up: it arrives from the pile and glows briefly. */
+  .drawn-from-deck{ animation:fromDeck .42s cubic-bezier(.2,.85,.3,1) both; }
+  @keyframes fromDeck{
+    0%{ opacity:0; transform:translate(-40px,-120px) rotate(-12deg) scale(.85); }
+    70%{ opacity:1; }
+    100%{ opacity:1; transform:none; box-shadow:0 0 0 3px var(--gold), 0 8px 18px rgba(0,0,0,0.4); }
+  }
+  .drawn-from-discard{ animation:fromDiscard .42s cubic-bezier(.2,.85,.3,1) both; }
+  @keyframes fromDiscard{
+    0%{ opacity:0; transform:translate(30px,-120px) rotate(10deg) scale(.85); }
+    70%{ opacity:1; }
+    100%{ opacity:1; transform:none; box-shadow:0 0 0 3px var(--gold), 0 8px 18px rgba(0,0,0,0.4); }
+  }
+  .drawn-from-deck, .drawn-from-discard{ animation-fill-mode:backwards; }
+
+  /* A card settling into the slot you dragged it to. */
+  .just-moved{ animation:settle .34s cubic-bezier(.2,1.1,.35,1) both; }
+  @keyframes settle{
+    0%{ transform:translateY(-10px) scale(1.07); box-shadow:0 14px 24px rgba(0,0,0,0.45); }
+    100%{ transform:none; }
+  }
+
+  /* The whole hand re-settling after a sort. */
+  .resettle{ animation:resettle .3s cubic-bezier(.2,.9,.3,1) both; }
+  @keyframes resettle{
+    0%{ opacity:0.35; transform:translateY(9px) scale(.95); }
+    100%{ opacity:1; transform:none; }
+  }
+
   .deal-in{ animation:dealIn .34s cubic-bezier(.2,.8,.3,1) both; }
   @keyframes dealIn{
     from{ opacity:0; transform:translateY(-14px) rotate(-4deg) scale(.9); }
@@ -423,7 +476,11 @@
 
   @media (prefers-reduced-motion: reduce){
     .summary, .deal-in, .discard-land, .final-crown,
-    .score-card.bump .pts, .turn-flash{ animation:none !important; }
+    .score-card.bump .pts, .turn-flash,
+    .drawn-from-deck, .drawn-from-discard, .just-moved, .resettle{
+      animation:none !important;
+    }
+    .card.shift-left, .card.shift-right{ transform:none !important; }
   }
 
   footer a{ color:var(--gold); opacity:0.85; }
@@ -761,6 +818,48 @@
   var myRoom = null;    // the code both players typed
   var netStatus = 'form';   // form | connecting | waiting | playing | lost
   var pendingMode = 'clasico';   // 'clasico' | 'trio' — what the host will open with
+
+  // How THIS player likes their own hand arranged. Purely local: it is never
+  // sent over the wire and never touches the game state.
+  var handOrder = [];
+  function loadHandOrder(){
+    try {
+      var raw = localStorage.getItem('chinchon-hand-order');
+      handOrder = raw ? JSON.parse(raw) : [];
+    } catch(e){ handOrder = []; }
+  }
+  function saveHandOrder(){
+    try { localStorage.setItem('chinchon-hand-order', JSON.stringify(handOrder)); } catch(e){}
+  }
+  // Apply the saved arrangement; anything newly drawn goes to the right end.
+  function arrangeHand(hand){
+    var byId = {};
+    hand.forEach(function(c){ byId[c.id] = c; });
+    var out = [];
+    handOrder.forEach(function(id){
+      if (byId[id]){ out.push(byId[id]); delete byId[id]; }
+    });
+    hand.forEach(function(c){ if (byId[c.id]) out.push(c); });
+    return out;
+  }
+  function setHandOrder(cards){
+    handOrder = cards.map(function(c){ return c.id; });
+    saveHandOrder();
+  }
+  function sortHandBySuit(hand){
+    var sorted = hand.slice().sort(function(a,b){
+      if (a.suit !== b.suit) return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
+      return RUN_ORDER.indexOf(a.rank) - RUN_ORDER.indexOf(b.rank);
+    });
+    setHandOrder(sorted);
+  }
+  function sortHandByRank(hand){
+    var sorted = hand.slice().sort(function(a,b){
+      var d = RUN_ORDER.indexOf(a.rank) - RUN_ORDER.indexOf(b.rank);
+      return d !== 0 ? d : SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
+    });
+    setHandOrder(sorted);
+  }
   var netDetail = null;
 
   function normaliseCode(raw){
@@ -802,6 +901,11 @@
   var logEl = document.getElementById('log');
   var selectedCardId = null;
   var lastDiscardId = null;
+  var justDrawnId = null;
+  var justMovedId = null;
+  var resortAnim = false;
+  var drawnFromDiscard = false;
+  var lastHandIds = null;
   var lastScores = [null, null];
   var lastRound = null;
   var justDealt = false;
@@ -835,6 +939,83 @@
     return div;
   }
 
+  // A card responds to two gestures: a tap selects it, a drag reorders the hand.
+  // Pointer events are used so a finger on a phone behaves like a mouse. The
+  // move/up listeners live on window rather than the card, so the gesture keeps
+  // working when the finger slides off the card it started on.
+  function makeCardInteractive(el, card, hand, selectable){
+    var DRAG_THRESHOLD = 8;
+
+    el.addEventListener('pointerdown', function(ev){
+      if (ev.button !== undefined && ev.button !== 0) return;
+
+      var startX = ev.clientX, startY = ev.clientY;
+      var fromIdx = hand.map(function(c){ return c.id; }).indexOf(card.id);
+      var siblings = [].slice.call(el.parentNode.children);
+      var rects = siblings.map(function(n){
+        var r = n.getBoundingClientRect();
+        return { mid: r.left + r.width / 2 };
+      });
+      var dragging = false;
+
+      function targetIndex(x){
+        var idx = 0;
+        for (var i = 0; i < rects.length; i++){ if (x > rects[i].mid) idx = i; }
+        return idx;
+      }
+
+      function onMove(e){
+        var dx = e.clientX - startX, dy = e.clientY - startY;
+        if (!dragging){
+          if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+          dragging = true;
+          el.classList.add('dragging');
+        }
+        if (e.cancelable) e.preventDefault();
+        el.style.transform = 'translate(' + dx + 'px,' + Math.min(0, dy) + 'px) scale(1.06)';
+        var t = targetIndex(e.clientX);
+        siblings.forEach(function(n, i){
+          if (n === el) return;
+          n.classList.toggle('shift-left', i > fromIdx && i <= t);
+          n.classList.toggle('shift-right', i < fromIdx && i >= t);
+        });
+      }
+
+      function cleanup(){
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onCancel);
+      }
+
+      function onUp(e){
+        cleanup();
+        if (!dragging){
+          if (selectable){
+            selectedCardId = (selectedCardId === card.id) ? null : card.id;
+            render();
+          }
+          return;
+        }
+        var to = targetIndex(e.clientX);
+        var next = hand.slice();
+        next.splice(fromIdx, 1);
+        next.splice(to, 0, card);
+        setHandOrder(next);
+        justMovedId = card.id;      // settle it into its new slot
+        render();
+      }
+
+      function onCancel(){
+        cleanup();
+        if (dragging) render();
+      }
+
+      window.addEventListener('pointermove', onMove, { passive: false });
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onCancel);
+    });
+  }
+
   function render(){
     var brandRoom = document.getElementById('brand-room');
     if (brandRoom){
@@ -859,6 +1040,17 @@
     // A new round means a fresh deal: stagger the cards in.
     justDealt = (lastRound !== state.round);
     lastRound = state.round;
+
+    // Spot the card that just arrived in my hand, to animate only that one.
+    var handIds = state.hands[mine].map(function(c){ return c.id; });
+    justDrawnId = null;
+    if (!justDealt && lastHandIds && handIds.length === lastHandIds.length + 1){
+      for (var hi = 0; hi < handIds.length; hi++){
+        if (lastHandIds.indexOf(handIds[hi]) === -1){ justDrawnId = handIds[hi]; break; }
+      }
+      drawnFromDiscard = (state.drawnFrom === 'discard');
+    }
+    lastHandIds = handIds;
 
     // scoreboard
     var sb = document.createElement('div');
@@ -983,28 +1175,54 @@
     var myHandEl = document.createElement('div');
     myHandEl.className = 'my-hand';
 
-    var myHand = state.hands[mine].slice().sort(function(a,b){
-      if (a.suit !== b.suit) return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
-      return RUN_ORDER.indexOf(a.rank) - RUN_ORDER.indexOf(b.rank);
-    });
+    var myHand = arrangeHand(state.hands[mine]);
     var partition = myHand.length >= 3 ? bestPartition(myHand) : { deadwood: myHand.reduce(function(s,c){return s+cardValue(c);},0), melds: [], deadCards: myHand };
     var meldedSet = {};
     partition.melds.forEach(function(m){ m.forEach(function(id){ meldedSet[id]=true; }); });
 
     myHand.forEach(function(c, cardIdx){
       var cls = 'mine' + (meldedSet[c.id] ? ' melded' : '') + (selectedCardId === c.id ? ' selected' : '');
-      var el = cardEl(c, cls, function(){
-        if (!canDiscard) return;
-        selectedCardId = (selectedCardId === c.id) ? null : c.id;
-        render();
-      });
+      var el = cardEl(c, cls);
+      el.dataset.cardId = c.id;
       if (justDealt){
         el.classList.add('deal-in');
         el.style.animationDelay = (cardIdx * 60) + 'ms';
+      } else if (resortAnim){
+        el.classList.add('resettle');
+        el.style.animationDelay = (cardIdx * 35) + 'ms';
+      } else if (c.id === justMovedId){
+        el.classList.add('just-moved');
+      } else if (c.id === justDrawnId){
+        // The card you just picked up: it flies in from the pile and glows,
+        // so you can see at a glance which one is new.
+        el.classList.add(drawnFromDiscard ? 'drawn-from-discard' : 'drawn-from-deck');
       }
+      makeCardInteractive(el, c, myHand, canDiscard);
       myHandEl.appendChild(el);
     });
     myWrap.appendChild(myHandEl);
+    justMovedId = null;
+    resortAnim = false;
+
+    // Quick arrangements — a shortcut for the drag, not a replacement.
+    var tools = document.createElement('div');
+    tools.className = 'hand-tools';
+    [
+      { label:'Ordenar por palo', fn:function(){ sortHandBySuit(myHand); resortAnim = true; render(); } },
+      { label:'Ordenar por número', fn:function(){ sortHandByRank(myHand); resortAnim = true; render(); } }
+    ].forEach(function(t){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tool-btn';
+      b.textContent = t.label;
+      b.addEventListener('click', t.fn);
+      tools.appendChild(b);
+    });
+    var dragNote = document.createElement('span');
+    dragNote.className = 'tool-note';
+    dragNote.textContent = 'o arrastra las cartas para colocarlas a tu gusto';
+    tools.appendChild(dragNote);
+    myWrap.appendChild(tools);
 
     var hint = document.createElement('div');
     hint.className = 'hint';
@@ -1557,6 +1775,7 @@
 
   function init(){
     try { myRoom = localStorage.getItem('chinchon-room') || null; } catch(e){}
+    loadHandOrder();
     setStatus('form');
   }
 
