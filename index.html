@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>Mesa de Chinchón</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link id="chinchon-font" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Karla:wght@400;500;700&display=swap">
@@ -144,6 +145,8 @@
     font-size:13px; color:var(--cream); opacity:0.85;
     background:rgba(0,0,0,0.2); border-radius:10px; padding:11px 16px;
   }
+  .version-warn{ background:rgba(192,80,63,0.22); border:1px solid rgba(224,141,127,0.4); }
+
   .waiting-dot{
     width:8px; height:8px; border-radius:50%; background:var(--gold);
     animation:pulse 1.4s ease-in-out infinite;
@@ -310,19 +313,7 @@
   .btn-outline:hover:not(:disabled){ background:rgba(211,163,78,0.12); }
   .btn-danger{ background:transparent; color:#e08d7f; border-color:#8a3a2f;}
 
-  .hand-tools{
-    display:flex; gap:8px; align-items:center; justify-content:center;
-    flex-wrap:wrap; margin-top:2px;
-  }
-  .tool-btn{
-    font-family:'Karla',sans-serif; font-size:12px;
-    padding:7px 13px; border-radius:8px; cursor:pointer;
-    background:rgba(0,0,0,0.22); color:var(--cream);
-    border:1px solid var(--panel-border);
-    transition:border-color .15s ease, color .15s ease;
-  }
-  .tool-btn:hover{ border-color:var(--gold-dim); color:var(--gold); }
-  .tool-note{ font-size:11.5px; color:var(--cream); opacity:0.5; }
+  .tool-note{ font-size:11.5px; color:var(--cream); opacity:0.5; text-align:center; margin-top:2px; }
 
   .my-hand .card{ touch-action:none; }
   .card.dragging{
@@ -505,11 +496,19 @@
 
   <footer>Chinchón para dos — escribid el mismo código y a jugar.<br>
   Cartas: <a href="https://commons.wikimedia.org/wiki/File:Baraja_espa%C3%B1ola_completa.png" target="_blank" rel="noopener">Baraja española</a>
-  de Basquetteur, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>.</footer>
+  de Basquetteur, <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>.
+  <span id="ver"></span></footer>
 </div>
 
 <script id="chinchon-js">
 (function(){
+
+  // NEVER change ROOM_PREFIX. The room name is the meeting point between two
+  // devices; if one player has an older cached copy with a different prefix,
+  // they look for different rooms and can never meet — which is exactly how
+  // pairing broke before.
+  var ROOM_PREFIX = 'chinchon-esp-';
+  var APP_VERSION = '5';
 
 
   // ---------- Card model ----------
@@ -846,20 +845,6 @@
     handOrder = cards.map(function(c){ return c.id; });
     saveHandOrder();
   }
-  function sortHandBySuit(hand){
-    var sorted = hand.slice().sort(function(a,b){
-      if (a.suit !== b.suit) return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
-      return RUN_ORDER.indexOf(a.rank) - RUN_ORDER.indexOf(b.rank);
-    });
-    setHandOrder(sorted);
-  }
-  function sortHandByRank(hand){
-    var sorted = hand.slice().sort(function(a,b){
-      var d = RUN_ORDER.indexOf(a.rank) - RUN_ORDER.indexOf(b.rank);
-      return d !== 0 ? d : SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
-    });
-    setHandOrder(sorted);
-  }
   var netDetail = null;
 
   function normaliseCode(raw){
@@ -1148,6 +1133,14 @@
 
     table.appendChild(centerRow);
 
+    if (versionMismatch){
+      var vm = document.createElement('div');
+      vm.className = 'waiting version-warn';
+      vm.innerHTML = '⚠ Tu amigo tiene una versión distinta del juego (' + versionMismatch +
+        ' frente a ' + APP_VERSION + '). Que recargue la página forzando (Ctrl+Shift+R, o Cmd+Shift+R en Mac).';
+      table.appendChild(vm);
+    }
+
     if (netStatus === 'waiting'){
       var waitEl = document.createElement('div');
       waitEl.className = 'waiting';
@@ -1187,9 +1180,7 @@
       if (justDealt){
         el.classList.add('deal-in');
         el.style.animationDelay = (cardIdx * 60) + 'ms';
-      } else if (resortAnim){
-        el.classList.add('resettle');
-        el.style.animationDelay = (cardIdx * 35) + 'ms';
+      } else if (false){
       } else if (c.id === justMovedId){
         el.classList.add('just-moved');
       } else if (c.id === justDrawnId){
@@ -1204,25 +1195,11 @@
     justMovedId = null;
     resortAnim = false;
 
-    // Quick arrangements — a shortcut for the drag, not a replacement.
-    var tools = document.createElement('div');
-    tools.className = 'hand-tools';
-    [
-      { label:'Ordenar por palo', fn:function(){ sortHandBySuit(myHand); resortAnim = true; render(); } },
-      { label:'Ordenar por número', fn:function(){ sortHandByRank(myHand); resortAnim = true; render(); } }
-    ].forEach(function(t){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'tool-btn';
-      b.textContent = t.label;
-      b.addEventListener('click', t.fn);
-      tools.appendChild(b);
-    });
-    var dragNote = document.createElement('span');
+    // Arranging the hand is done by dragging the cards themselves.
+    var dragNote = document.createElement('div');
     dragNote.className = 'tool-note';
-    dragNote.textContent = 'o arrastra las cartas para colocarlas a tu gusto';
-    tools.appendChild(dragNote);
-    myWrap.appendChild(tools);
+    dragNote.textContent = 'Arrastra las cartas para ordenarlas a tu gusto';
+    myWrap.appendChild(dragNote);
 
     var hint = document.createElement('div');
     hint.className = 'hint';
@@ -1295,7 +1272,33 @@
       box.innerHTML =
         '<h2 style="color:var(--gold);margin:0 0 10px;">Conectando…</h2>' +
         '<div class="waiting" style="justify-content:center">' +
-        '<span class="waiting-dot"></span>Buscando la sala <b>' + (myRoom||'') + '</b></div>';
+        '<span class="waiting-dot"></span>' +
+        (joinAttempt > 0 ? 'Reintentando' : 'Buscando') +
+        ' la sala <b>' + (myRoom||'') + '</b>…</div>' +
+        '<p class="room-hint" style="margin-top:12px">Puede tardar unos segundos en móviles con datos.</p>';
+      root.appendChild(box);
+      return;
+    }
+
+    if (netStatus === 'failed'){
+      box.innerHTML =
+        '<h2 style="color:var(--gold);margin:0 0 10px;">No se pudo emparejar</h2>' +
+        '<p>He intentado abrir la sala <b>' + (myRoom||'') + '</b> y también entrar en ella, ' +
+        'pero no hemos coincidido.</p>' +
+        '<p style="font-size:13px;opacity:0.75">Probad esto, en este orden:<br>' +
+        '1. Que <b>uno solo</b> entre primero y espere a ver «Sala abierta».<br>' +
+        '2. Que el otro entre <b>después</b>, con el mismo código.<br>' +
+        '3. Si sigue sin ir, probad otro código distinto.</p>';
+      var again = document.createElement('button');
+      again.className = 'btn btn-primary';
+      again.textContent = 'Reintentar';
+      again.addEventListener('click', function(){ connectRoom(myRoom); });
+      box.appendChild(again);
+      var other = document.createElement('button');
+      other.className = 'leave-link';
+      other.textContent = 'Usar otro código';
+      other.addEventListener('click', leaveRoom);
+      box.appendChild(other);
       root.appendChild(box);
       return;
     }
@@ -1665,12 +1668,31 @@
   // arrive registers it and becomes host; the second finds it taken and dials
   // in. A random code could never match across two devices, which is why
   // matching has to be player-chosen.
-  var ROOM_PREFIX = 'chinchon-baraja-esp-v3-';
+
+  // STUN only. The free public TURN relays were all tested and none answer any
+  // more, so adding them just delays the handshake for no benefit.
+  var ICE = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun.cloudflare.com:3478' }
+    ]
+  };
+  var PEER_OPTS = { debug: 0, config: ICE };
+
+  var versionMismatch = null;   // the other player's version, when it differs
+  var joinAttempt = 0;          // how many host/guest cycles we have tried
+  var MAX_ATTEMPTS = 4;
+  var joinTimer = null;
 
   function setStatus(st, detail){
     netStatus = st;
     netDetail = detail || null;
     render();
+  }
+
+  function clearJoinTimer(){
+    if (joinTimer){ clearTimeout(joinTimer); joinTimer = null; }
   }
 
   function connectRoom(rawCode){
@@ -1680,20 +1702,25 @@
       return;
     }
     if (typeof Peer === 'undefined'){
-      setStatus('form', 'No se ha podido cargar la conexión. Comprueba tu internet y recarga.');
+      setStatus('form', 'No se ha podido cargar la conexión. Comprueba tu internet y recarga la página.');
       return;
     }
     myRoom = code;
     try { localStorage.setItem('chinchon-room', code); } catch(e){}
+    joinAttempt = 0;
     setStatus('connecting');
-    startAsHost(ROOM_PREFIX + code);
+    tryHost();
   }
 
-  function startAsHost(hostId){
+  // Attempt to own the room code. If someone already owns it, we dial them.
+  function tryHost(){
+    clearJoinTimer();
     destroyPeer();
-    peer = new Peer(hostId, { debug: 0 });
+    var hostId = ROOM_PREFIX + myRoom;
     isHost = true;
     mySeat = 0;
+
+    peer = new Peer(hostId, PEER_OPTS);
 
     peer.on('open', function(){
       state = freshState();
@@ -1704,43 +1731,86 @@
       wireConn();
     });
     peer.on('error', function(err){
-      if (err && err.type === 'unavailable-id'){
-        startAsGuest(hostId);           // someone is already hosting this code
+      var type = err && err.type;
+      if (type === 'unavailable-id'){
+        tryGuest();                       // somebody is already hosting it
       } else if (netStatus !== 'playing'){
-        setStatus('form', 'No se pudo conectar (' + ((err && err.type) || 'error') + '). Inténtalo otra vez.');
+        retryOrGiveUp(type);
       }
+    });
+    peer.on('disconnected', function(){
+      if (netStatus !== 'playing'){ try { peer.reconnect(); } catch(e){} }
     });
   }
 
-  function startAsGuest(hostId){
+  // Dial the player who owns the code.
+  function tryGuest(){
+    clearJoinTimer();
     destroyPeer();
-    peer = new Peer({ debug: 0 });
+    var hostId = ROOM_PREFIX + myRoom;
     isHost = false;
     mySeat = 1;
+
+    peer = new Peer(PEER_OPTS);
 
     peer.on('open', function(){
       conn = peer.connect(hostId, { reliable: true });
       wireConn();
-      setTimeout(function(){
-        if (netStatus === 'connecting'){
-          setStatus('form', 'Tu amigo no responde en la sala ' + myRoom + '. Que la abra él primero, o probad otro código.');
-        }
-      }, 12000);
+      // If the handshake stalls, the "host" may be a stale registration left
+      // behind by a closed tab — so we take the room ourselves next round.
+      clearJoinTimer();
+      joinTimer = setTimeout(function(){
+        if (netStatus !== 'playing') retryOrGiveUp('sin-respuesta');
+      }, 15000);
     });
     peer.on('error', function(err){
-      if (netStatus !== 'playing'){
-        setStatus('form', 'No se pudo entrar en la sala (' + ((err && err.type) || 'error') + ').');
+      var type = err && err.type;
+      if (netStatus === 'playing') return;
+      if (type === 'peer-unavailable'){
+        retryOrGiveUp('sala-vacia');       // nobody home: try hosting instead
+      } else {
+        retryOrGiveUp(type);
       }
     });
+    peer.on('disconnected', function(){
+      if (netStatus !== 'playing'){ try { peer.reconnect(); } catch(e){} }
+    });
+  }
+
+  // Alternate between hosting and joining a few times before admitting defeat:
+  // whichever role failed, the other one is usually the right move.
+  function retryOrGiveUp(reason){
+    clearJoinTimer();
+    joinAttempt++;
+    if (joinAttempt >= MAX_ATTEMPTS){
+      setStatus('failed', reason);
+      return;
+    }
+    setStatus('connecting');
+    var goHost = !isHost;
+    setTimeout(function(){
+      if (netStatus !== 'connecting') return;
+      if (goHost) tryHost(); else tryGuest();
+    }, 900);
   }
 
   function wireConn(){
     conn.on('open', function(){
+      clearJoinTimer();
+      joinAttempt = 0;
       setStatus('playing');
+      conn.send({ t:'hello', v: APP_VERSION });
       if (isHost) sendState();
     });
     conn.on('data', function(msg){
       if (!msg || typeof msg !== 'object') return;
+      if (msg.t === 'hello'){
+        if (msg.v !== APP_VERSION){
+          versionMismatch = msg.v;
+          render();
+        }
+        return;
+      }
       if (msg.t === 'state'){
         state = msg.s;
         render();
@@ -1767,6 +1837,8 @@
   }
 
   function leaveRoom(){
+    clearJoinTimer();
+    joinAttempt = 0;
     destroyPeer();
     myRoom = null; mySeat = null; isHost = false;
     try { localStorage.removeItem('chinchon-room'); } catch(e){}
@@ -1774,6 +1846,8 @@
   }
 
   function init(){
+    var v = document.getElementById('ver');
+    if (v) v.textContent = '· versión ' + APP_VERSION;
     try { myRoom = localStorage.getItem('chinchon-room') || null; } catch(e){}
     loadHandOrder();
     setStatus('form');
